@@ -20,7 +20,9 @@ export class Name {
 
     /** Expects that all Name components are properly masked */
     constructor(other: string[], delimiter?: string) {
-        throw new Error("needs implementation or deletion");
+
+        this.delimiter = (delimiter ?? DEFAULT_DELIMITER);
+        this.components = other.slice();
     }
 
     /**
@@ -28,8 +30,14 @@ export class Name {
      * Control characters are not escaped (creating a human-readable string)
      * Users can vary the delimiter character to be used
      */
+    // @methodtype conversion-method (query)
     public asString(delimiter: string = this.delimiter): string {
-        throw new Error("needs implementation or deletion");
+        
+        let humanReadableComponents = [];
+        for (let component of this.components) {
+           humanReadableComponents.push(this.unmaskComponent(component, this.delimiter));
+        }
+        return humanReadableComponents.join(this.delimiter);
     }
 
     /** 
@@ -37,36 +45,110 @@ export class Name {
      * Machine-readable means that from a data string, a Name can be parsed back in
      * The control characters in the data string are the default characters
      */
+    // @methodtype conversion-method (query)
     public asDataString(): string {
-        throw new Error("needs implementation or deletion");
+
+        if (this.delimiter != DEFAULT_DELIMITER) {
+            let machineReadableComponents = [];
+            for (let component of this.components) {
+            machineReadableComponents.push(this.maskComponent(this.unmaskComponent(component, this.delimiter), DEFAULT_DELIMITER));
+            }
+            return machineReadableComponents.join(this.delimiter);
+        }
+        return this.components.join(this.delimiter);
     }
 
+    // @methodtype get-method (query)
     public getComponent(i: number): string {
-        throw new Error("needs implementation or deletion");
+
+        if (!this.isValidatIndex(i))
+            throw new Error("Invalid index");
+
+        return this.components[i];
     }
 
     /** Expects that new Name component c is properly masked */
+    // @methodtype set-method (mutation)
     public setComponent(i: number, c: string): void {
-        throw new Error("needs implementation or deletion");
+
+        if (!this.isValidatIndex(i))
+            throw new Error("Invalid index");
+
+        this.components[i] = c;
     }
 
      /** Returns number of components in Name instance */
+     // @methodtype get-method (query)
      public getNoComponents(): number {
-        throw new Error("needs implementation or deletion");
+        return this.components.length;
     }
 
     /** Expects that new Name component c is properly masked */
+    // @methodtype command-method (mutation)
     public insert(i: number, c: string): void {
-        throw new Error("needs implementation or deletion");
+        
+        if (!this.isValidatIndex(i))
+            throw new Error("Invalid index");
+
+        this.components.splice(i, 0, c);
     }
 
     /** Expects that new Name component c is properly masked */
+    // @methodtype command-method (mutation)
     public append(c: string): void {
-        throw new Error("needs implementation or deletion");
+
+        this.components.push(c);
     }
 
+    // @methodtype command-method (mutation)
     public remove(i: number): void {
-        throw new Error("needs implementation or deletion");
+        
+        if (!this.isValidatIndex(i))
+            throw new Error("Invalid index");
+
+        this.components.splice(i, 1);
+    }
+
+    // @methodtype helper-method
+    private maskComponent(component: string, delimiter: string): string {
+
+        let masked = "";
+        for (let char of component) {
+            if (char === ESCAPE_CHARACTER || char ===delimiter) {
+                masked += ESCAPE_CHARACTER;
+            }
+            masked += char;
+        }
+        return masked;
+    }
+
+    // @methodtype helper-method
+    private unmaskComponent(component: string, delimiter: string): string {
+        let unmasked = "";
+
+        for (let i = 0; i < component.length; i++) {
+            const char = component[i];
+            if (char === ESCAPE_CHARACTER) {
+                unmasked += component[i+1];
+                i++;
+            } else {
+                unmasked += char;
+            }
+        }
+
+        return unmasked
+    }
+
+    // @methodtype boolean-query-method (query)
+    private isValidatIndex(index: number): boolean {
+
+        if (!Number.isInteger(index)) 
+            return false;
+
+        if (index < 0 || index >= this.components.length)
+             return false;
+
+        return true;
     }
 
 }
